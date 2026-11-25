@@ -1,36 +1,17 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# VibeCode AI — Personal AI Tutor for Vibe Coding
 
-## Getting Started
+**Live Demo (Vercel):** https://ai-tutor-wibecoding.vercel.app
 
-First, run the development server:
+## Features
+- **AI Tutor (`gemini-3.5-flash-lite`)**: Interactive prompt evaluation, debugging guidance, and lesson Q&A.
+- **Learning Roadmap**: 3 Stages (*Beginner*, *Advanced*, *Expert*) across 6 skill levels and 12 lessons with quizzes and hands-on prompt challenges.
+- **Free & PRO Tiers (Stripe)**:
+  - **Free**: 15 min/day practice (resets daily at 12:00 PM noon), 5 foundational lessons, quizzes, and prompt tasks.
+  - **PRO**: 1–2+ hours/day practice, Cursor / Claude Code / Replit workflows, context rules (`.cursorrules`, `CLAUDE.md`), testing, debugging, and deployment.
+- **Themes & Languages**: Light / Dark mode + RU / EN switcher.
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
-
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
-
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
-
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
-
-## Learn More
-
-To learn more about Next.js, take a look at the following resources:
-
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+## Tech Stack
+- Next.js 16 (App Router, TypeScript)
+- Tailwind CSS v4 + shadcn/ui
+- Google Gemini (`@google/genai`, `gemini-3.5-flash-lite`)
+- Stripe Checkout & Webhooks
