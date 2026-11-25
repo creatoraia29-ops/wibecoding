@@ -41,19 +41,25 @@ interface Message {
   content: string;
 }
 
-function LessonPageContent() {
-  const params = useParams<{ lessonId: string }>();
-  const lessonId = params?.lessonId ?? "";
+function LessonWorkspace({
+  lessonId,
+}: {
+  lessonId: string;
+}) {
   const lesson = useMemo(() => getLessonById(lessonId), [lessonId]);
 
   const { locale, t, user, quota, refreshUser, startStripeCheckout } =
     useApp();
 
-  const [messages, setMessages] = useState<Message[]>([]);
+  const [messages, setMessages] = useState<Message[]>(() => [
+    { role: "assistant", content: t.lesson.tutorWelcome },
+  ]);
   const [chatInput, setChatInput] = useState("");
   const [sending, setSending] = useState(false);
 
-  const [promptDraft, setPromptDraft] = useState("");
+  const [promptDraft, setPromptDraft] = useState(
+    () => lesson?.promptTask.starterPrompt[locale] ?? ""
+  );
   const [selectedAnswers, setSelectedAnswers] = useState<
     Record<number, number>
   >({});
@@ -61,20 +67,6 @@ function LessonPageContent() {
   const [upgrading, setUpgrading] = useState(false);
 
   const scrollEndRef = useRef<HTMLDivElement | null>(null);
-
-  useEffect(() => {
-    if (lesson) {
-      setPromptDraft(lesson.promptTask.starterPrompt[locale]);
-      setMessages([
-        {
-          role: "assistant",
-          content: t.lesson.tutorWelcome,
-        },
-      ]);
-      setSelectedAnswers({});
-      setQuizSubmitted(false);
-    }
-  }, [lesson, locale, t.lesson.tutorWelcome]);
 
   useEffect(() => {
     scrollEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -507,6 +499,13 @@ function LessonPageContent() {
       </Dialog>
     </div>
   );
+}
+
+function LessonPageContent() {
+  const params = useParams<{ lessonId: string }>();
+  const lessonId = params?.lessonId ?? "";
+  const { locale } = useApp();
+  return <LessonWorkspace key={`${lessonId}-${locale}`} lessonId={lessonId} />;
 }
 
 export default function LessonPage() {

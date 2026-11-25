@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React, { useSyncExternalStore } from "react";
 import Link from "next/link";
 import { useTheme } from "next-themes";
 import { Code2, Crown, Globe, Moon, Sun, Timer } from "lucide-react";
@@ -9,14 +9,16 @@ import { Badge } from "@/components/ui/badge";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
+const emptySubscribe = () => () => {};
+
 export function Navbar() {
   const { locale, setLocale, t, user, quota } = useApp();
   const { theme, setTheme } = useTheme();
-  const [mounted, setMounted] = useState(false);
-
-  useEffect(() => {
-    setMounted(true);
-  }, []);
+  const mounted = useSyncExternalStore(
+    emptySubscribe,
+    () => true,
+    () => false
+  );
 
   const remainingMin = quota ? Math.ceil(quota.remainingSeconds / 60) : 15;
 

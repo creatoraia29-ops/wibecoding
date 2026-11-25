@@ -161,15 +161,36 @@ Respond concisely, clearly, and encouragingly in English. If the student submits
       .map((m) => `${m.role === "user" ? "Student" : "Tutor"}: ${m.content}`)
       .join("\n\n");
 
-    const response = await ai.models.generateContent({
-      model: MODEL_NAME,
-      contents: conversationText,
-      config: {
-        systemInstruction,
-        temperature: 0.5,
-        maxOutputTokens: 900,
-      },
-    });
+    const generateWithRetry = async () => {
+      try {
+        return await ai.models.generateContent({
+          model: MODEL_NAME,
+          contents: conversationText,
+          config: {
+            systemInstruction,
+            temperature: 0.5,
+            maxOutputTokens: 900,
+          },
+        });
+      } catch (firstErr) {
+        const status = (firstErr as { status?: number })?.status;
+        if (status === 503 || status === 429) {
+          await new Promise((r) => setTimeout(r, 700));
+          return await ai.models.generateContent({
+            model: MODEL_NAME,
+            contents: conversationText,
+            config: {
+              systemInstruction,
+              temperature: 0.5,
+              maxOutputTokens: 900,
+            },
+          });
+        }
+        throw firstErr;
+      }
+    };
+
+    const response = await generateWithRetry();
 
     const reply =
       response.text ??

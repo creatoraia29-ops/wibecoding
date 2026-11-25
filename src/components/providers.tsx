@@ -6,6 +6,7 @@ import React, {
   useContext,
   useEffect,
   useState,
+  useSyncExternalStore,
 } from "react";
 import { ThemeProvider as NextThemesProvider } from "next-themes";
 import { dictionary, type Locale } from "@/lib/i18n";
@@ -42,6 +43,30 @@ interface AppContextValue {
 
 const AppContext = createContext<AppContextValue | null>(null);
 
+const LOCALE_STORAGE_KEY = "vibecode_locale";
+const localeListeners = new Set<() => void>();
+
+function subscribeLocale(listener: () => void) {
+  localeListeners.add(listener);
+  const onStorage = (e: StorageEvent) => {
+    if (e.key === LOCALE_STORAGE_KEY) listener();
+  };
+  window.addEventListener("storage", onStorage);
+  return () => {
+    localeListeners.delete(listener);
+    window.removeEventListener("storage", onStorage);
+  };
+}
+
+function getLocaleSnapshot(): Locale {
+  const saved = window.localStorage.getItem(LOCALE_STORAGE_KEY);
+  return saved === "en" ? "en" : "ru";
+}
+
+function getLocaleServerSnapshot(): Locale {
+  return "ru";
+}
+
 export function useApp() {
   const ctx = useContext(AppContext);
   if (!ctx) {
@@ -51,21 +76,18 @@ export function useApp() {
 }
 
 export function Providers({ children }: { children: React.ReactNode }) {
-  const [locale, setLocaleState] = useState<Locale>("ru");
+  const locale = useSyncExternalStore(
+    subscribeLocale,
+    getLocaleSnapshot,
+    getLocaleServerSnapshot
+  );
   const [user, setUser] = useState<UserProfile | null>(null);
   const [quota, setQuota] = useState<QuotaState | null>(null);
   const [loadingUser, setLoadingUser] = useState(true);
 
-  useEffect(() => {
-    const saved = window.localStorage.getItem("vibecode_locale");
-    if (saved === "en" || saved === "ru") {
-      setLocaleState(saved);
-    }
-  }, []);
-
   const setLocale = useCallback((loc: Locale) => {
-    setLocaleState(loc);
-    window.localStorage.setItem("vibecode_locale", loc);
+    window.localStorage.setItem(LOCALE_STORAGE_KEY, loc);
+    localeListeners.forEach((l) => l());
   }, []);
 
   const refreshUser = useCallback(async () => {
@@ -89,8 +111,30 @@ export function Providers({ children }: { children: React.ReactNode }) {
   }, []);
 
   useEffect(() => {
-    void refreshUser();
-  }, [refreshUser]);
+    let active = true;
+    const tzOffsetMinutes = new Date().getTimezoneOffset();
+    fetch("/api/me", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ tzOffsetMinutes }),
+    })
+      .then((res) => (res.ok ? res.json() : null))
+      .then((data) => {
+        if (active && data) {
+          setUser(data.user);
+          setQuota(data.quota);
+        }
+      })
+      .catch((err) => {
+        console.error("Failed to fetch user:", err);
+      })
+      .finally(() => {
+        if (active) setLoadingUser(false);
+      });
+    return () => {
+      active = false;
+    };
+  }, []);
 
   const startStripeCheckout = useCallback(async () => {
     const res = await fetch("/api/stripe/checkout", { method: "POST" });

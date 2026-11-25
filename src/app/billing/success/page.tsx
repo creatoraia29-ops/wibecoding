@@ -5,7 +5,7 @@ import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { CheckCircle2, Crown } from "lucide-react";
 import { useApp } from "@/components/providers";
-import { Button, buttonVariants } from "@/components/ui/button";
+import { buttonVariants } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import {
   Card,
@@ -20,10 +20,27 @@ function BillingSuccessContent() {
   const { t, refreshUser } = useApp();
   const searchParams = useSearchParams();
   const isDemo = searchParams.get("demo") === "true";
+  const sessionId = searchParams.get("session_id");
 
   useEffect(() => {
-    void refreshUser();
-  }, [refreshUser]);
+    let active = true;
+    const sync = async () => {
+      if (sessionId) {
+        await fetch("/api/stripe/verify", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ sessionId }),
+        }).catch(() => {});
+      }
+      if (active) {
+        await refreshUser();
+      }
+    };
+    void sync();
+    return () => {
+      active = false;
+    };
+  }, [sessionId, refreshUser]);
 
   return (
     <div className="mx-auto flex max-w-lg items-center justify-center px-4 py-20">
