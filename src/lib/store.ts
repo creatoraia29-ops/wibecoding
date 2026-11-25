@@ -1,4 +1,5 @@
 import fs from "node:fs";
+import os from "node:os";
 import path from "node:path";
 import { getQuotaStatus, type PlanType } from "@/lib/quota";
 
@@ -21,7 +22,9 @@ interface StoreData {
   users: Record<string, UserRecord>;
 }
 
-const DATA_DIR = path.join(process.cwd(), ".data");
+const DATA_DIR = process.env.VERCEL
+  ? path.join(os.tmpdir(), "vibecode-data")
+  : path.join(process.cwd(), ".data");
 const STORE_PATH = path.join(DATA_DIR, "store.json");
 
 function ensureStore(): StoreData {
